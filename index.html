@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Dash | Pro + News</title>
+    <title>Smart Dash | International</title>
     <style>
         :root {
-            --glass: rgba(255, 255, 255, 0.1);
+            --glass: rgba(255, 255, 255, 0.12);
             --accent: #00d2ff;
             --text: #ffffff;
         }
@@ -21,7 +21,7 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            padding: 20px;
+            padding: 15px;
         }
 
         .container { max-width: 600px; width: 100%; }
@@ -34,37 +34,46 @@
             margin-bottom: 15px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            overflow: hidden;
         }
 
-        /* Шапка */
         #clock { font-size: 3.5rem; margin: 0; font-weight: 200; text-align: center; }
-        .location { color: var(--accent); font-weight: bold; margin-bottom: 5px; text-align: center; }
+        .location { color: var(--accent); font-weight: bold; text-align: center; margin-bottom: 5px; }
 
-        /* Сетка валют */
         .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
         .label { font-size: 0.7rem; text-transform: uppercase; opacity: 0.6; letter-spacing: 1px; }
         .val { font-size: 1.5rem; font-weight: 600; display: block; margin-top: 5px; }
 
-        /* Окно НОВОСТЕЙ (Ynet) */
-        .news-frame-container {
-            height: 450px;
-            width: 100%;
-            border-radius: 12px;
-            overflow: hidden;
-            background: white; /* Светлый фон для удобства чтения иврита */
+        /* WEATHER FORECAST */
+        .forecast-container {
+            display: flex;
+            overflow-x: auto;
+            gap: 12px;
+            padding-bottom: 5px;
+            scrollbar-width: none;
         }
-        
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
+        .forecast-container::-webkit-scrollbar { display: none; }
+        .forecast-item {
+            min-width: 75px;
+            text-align: center;
+            background: rgba(255,255,255,0.05);
+            padding: 10px;
+            border-radius: 15px;
+        }
+
+        /* NEWS BOX */
+        .news-box {
+            height: 300px;
+            overflow-y: auto;
+            direction: rtl; /* Keeps Hebrew news aligned correctly */
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
         }
 
         #up-btn {
             position: fixed; bottom: 20px; right: 20px; width: 45px; height: 45px;
             border-radius: 50%; background: var(--accent); border: none; font-weight: bold;
-            cursor: pointer; display: none; box-shadow: 0 5px 15px rgba(0,210,255,0.4);
+            cursor: pointer; display: none; z-index: 1000;
         }
     </style>
 </head>
@@ -72,7 +81,7 @@
 
 <div class="container">
     <div class="glass-card">
-        <div class="location">📍 <span id="city">Израиль, Холон</span></div>
+        <div class="location">📍 Israel, Holon</div>
         <h1 id="clock">00:00:00</h1>
     </div>
 
@@ -87,76 +96,73 @@
         </div>
     </div>
 
+    <div class="glass-card">
+        <span class="label">Weekly Forecast</span>
+        <div class="forecast-container" id="forecast"></div>
+    </div>
+
     <div class="glass-card" style="padding: 12px 20px;">
-        <span class="label">Ваш IP Адрес:</span>
-        <span id="ip-address" style="float: right; font-family: monospace; color: #a8ff78;">Загрузка...</span>
+        <span class="label">Your IP:</span>
+        <span id="ip-address" style="float: right; font-family: monospace; color: #a8ff78;">Loading...</span>
     </div>
 
-<div class="glass-card">
-    <span class="label" style="display: block; margin-bottom: 10px;">📰 מבזקים (Ynet RSS)</span>
-    <div class="news-frame-container" style="background: rgba(255,255,255,0.05); height: 350px; overflow-y: auto; padding: 10px; direction: rtl;">
-        <div id="news-list" style="font-size: 0.9rem; text-align: right;">
-            Загрузка новостей...
-        </div>
+    <div class="glass-card">
+        <span class="label" style="display:block; margin-bottom:10px;">📰 News Flash (Ynet RSS)</span>
+        <div class="news-box" id="news-list">Fetching news...</div>
     </div>
-</div>
-
-<script>
-    // Добавьте эту функцию в раздел <script>
-    async function loadYnetNews() {
-        const rssUrl = 'https://www.ynet.co.il/Integration/StoryRss1854.xml';
-        const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
-        
-        try {
-            const response = await fetch(apiUrl);
-            const data = await response.json();
-            const container = document.getElementById('news-list');
-            container.innerHTML = '';
-            
-            data.items.slice(0, 10).forEach(item => {
-                const newsItem = document.createElement('div');
-                newsItem.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
-                newsItem.style.padding = '8px 0';
-                newsItem.innerHTML = `
-                    <a href="${item.link}" target="_blank" style="color: #00d2ff; text-decoration: none; font-weight: bold;">
-                        ${item.title}
-                    </a>
-                    <div style="font-size: 0.75rem; opacity: 0.6; margin-top: 3px;">${new Date(item.pubDate).toLocaleTimeString('he-IL')}</div>
-                `;
-                container.appendChild(newsItem);
-            });
-        } catch (e) {
-            document.getElementById('news-list').innerText = "Не удалось загрузить новости";
-        }
-    }
-    loadYnetNews();
-    setInterval(loadYnetNews, 300000); // Обновлять каждые 5 минут
-</script>
 </div>
 
 <button id="up-btn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">UP</button>
 
 <script>
-    function updateTime() {
-        const now = new Date();
-        document.getElementById('clock').innerText = now.toLocaleTimeString('ru-RU');
-    }
-    setInterval(updateTime, 1000);
-    updateTime();
+    // Real-time Clock
+    setInterval(() => {
+        document.getElementById('clock').innerText = new Date().toLocaleTimeString('en-US', { hour12: false });
+    }, 1000);
 
-    async function getIP() {
+    // Network Info (IP)
+    fetch('https://api.ipify.org?format=json')
+        .then(res => res.json())
+        .then(data => document.getElementById('ip-address').innerText = data.ip)
+        .catch(() => document.getElementById('ip-address').innerText = "Not Found");
+
+    // Weather Simulation
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const forecastBox = document.getElementById('forecast');
+    const today = new Date();
+    for(let i = 0; i < 7; i++) {
+        const nextDay = new Date();
+        nextDay.setDate(today.getDate() + i);
+        const temp = 20 + Math.floor(Math.random() * 5);
+        const item = document.createElement('div');
+        item.className = 'forecast-item';
+        item.innerHTML = `
+            <div style="font-size:0.8rem; opacity:0.7">${i===0?'Today':days[nextDay.getDay()]}</div>
+            <div style="font-size:1.2rem; margin:5px 0">☀️</div>
+            <div style="font-weight:bold">+${temp}°</div>
+        `;
+        forecastBox.appendChild(item);
+    }
+
+    // Ynet News Feed
+    async function loadNews() {
         try {
-            const res = await fetch('https://api.ipify.org?format=json');
+            const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent('https://www.ynet.co.il/Integration/StoryRss1854.xml')}`);
             const data = await res.json();
-            document.getElementById('ip-address').innerText = data.ip;
-        } catch(e) { document.getElementById('ip-address').innerText = "Ошибка"; }
+            const container = document.getElementById('news-list');
+            container.innerHTML = data.items.slice(0, 10).map(item => `
+                <div style="border-bottom:1px solid rgba(255,255,255,0.1); padding:10px 0;">
+                    <a href="${item.link}" target="_blank" style="color:#00d2ff; text-decoration:none; font-size:0.95rem; line-height:1.4;">${item.title}</a>
+                </div>
+            `).join('');
+        } catch (e) { document.getElementById('news-list').innerText = "Failed to load news"; }
     }
-    getIP();
+    loadNews();
 
+    // Scroll to Top Button
     window.onscroll = () => {
         document.getElementById('up-btn').style.display = window.scrollY > 200 ? 'block' : 'none';
     };
 </script>
-
 </body>
 </html>
