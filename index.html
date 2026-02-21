@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Dash | International</title>
+    <title>Smart Dash Pro</title>
     <style>
         :root {
             --glass: rgba(255, 255, 255, 0.12);
@@ -29,6 +29,7 @@
         .glass-card {
             background: var(--glass);
             backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
             border-radius: 20px;
             padding: 20px;
             margin-bottom: 15px;
@@ -37,7 +38,7 @@
         }
 
         #clock { font-size: 3.5rem; margin: 0; font-weight: 200; text-align: center; }
-        .location { color: var(--accent); font-weight: bold; text-align: center; margin-bottom: 5px; }
+        .location { color: var(--accent); font-weight: bold; text-align: center; margin-bottom: 5px; min-height: 1.2em; }
 
         .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
         .label { font-size: 0.7rem; text-transform: uppercase; opacity: 0.6; letter-spacing: 1px; }
@@ -64,7 +65,7 @@
         .news-box {
             height: 300px;
             overflow-y: auto;
-            direction: rtl; /* Keeps Hebrew news aligned correctly */
+            direction: rtl;
             padding: 10px;
             background: rgba(0,0,0,0.2);
             border-radius: 12px;
@@ -81,18 +82,18 @@
 
 <div class="container">
     <div class="glass-card">
-        <div class="location">📍 Israel, Holon</div>
+        <div class="location" id="user-location">📍 Detecting location...</div>
         <h1 id="clock">00:00:00</h1>
     </div>
 
     <div class="grid-row">
         <div class="glass-card">
             <span class="label">🇺🇸 USD/ILS</span>
-            <span class="val">3.128</span>
+            <span class="val" id="usd-rate">3.115</span>
         </div>
         <div class="glass-card">
             <span class="label">🇪🇺 EUR/ILS</span>
-            <span class="val">3.679</span>
+            <span class="val" id="eur-rate">3.679</span>
         </div>
     </div>
 
@@ -115,25 +116,46 @@
 <button id="up-btn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">UP</button>
 
 <script>
-    // Real-time Clock
+    // 1. Clock
     setInterval(() => {
-        document.getElementById('clock').innerText = new Date().toLocaleTimeString('en-US', { hour12: false });
+        document.getElementById('clock').innerText = new Date().toLocaleTimeString('en-GB');
     }, 1000);
 
-    // Network Info (IP)
+    // 2. Real-time Location Detection
+    async function initLocation() {
+        const locElement = document.getElementById('user-location');
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                    const data = await res.json();
+                    const city = data.address.city || data.address.town || data.address.village || "Israel";
+                    locElement.innerText = `📍 ${city}`;
+                } catch (e) { locElement.innerText = "📍 Israel"; }
+            }, () => {
+                locElement.innerText = "📍 Holon (Default)";
+            });
+        }
+    }
+    initLocation();
+
+    // 3. Network Info (IP)
     fetch('https://api.ipify.org?format=json')
         .then(res => res.json())
         .then(data => document.getElementById('ip-address').innerText = data.ip)
-        .catch(() => document.getElementById('ip-address').innerText = "Not Found");
+        .catch(() => document.getElementById('ip-address').innerText = "Hidden");
 
-    // Weather Simulation
+    // 4. Weather Simulation (Using current date data)
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const forecastBox = document.getElementById('forecast');
     const today = new Date();
+    // Today's weather in Holon is 19°C.
     for(let i = 0; i < 7; i++) {
         const nextDay = new Date();
         nextDay.setDate(today.getDate() + i);
-        const temp = 20 + Math.floor(Math.random() * 5);
+        const temp = i === 0 ? 19 : 19 + Math.floor(Math.random() * 5); 
         const item = document.createElement('div');
         item.className = 'forecast-item';
         item.innerHTML = `
@@ -144,7 +166,7 @@
         forecastBox.appendChild(item);
     }
 
-    // Ynet News Feed
+    // 5. Ynet News Feed (RSS to JSON)
     async function loadNews() {
         try {
             const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent('https://www.ynet.co.il/Integration/StoryRss1854.xml')}`);
@@ -152,14 +174,14 @@
             const container = document.getElementById('news-list');
             container.innerHTML = data.items.slice(0, 10).map(item => `
                 <div style="border-bottom:1px solid rgba(255,255,255,0.1); padding:10px 0;">
-                    <a href="${item.link}" target="_blank" style="color:#00d2ff; text-decoration:none; font-size:0.95rem; line-height:1.4;">${item.title}</a>
+                    <a href="${item.link}" target="_blank" style="color:#00d2ff; text-decoration:none; font-size:0.95rem;">${item.title}</a>
                 </div>
             `).join('');
         } catch (e) { document.getElementById('news-list').innerText = "Failed to load news"; }
     }
     loadNews();
 
-    // Scroll to Top Button
+    // 6. Scroll Logic
     window.onscroll = () => {
         document.getElementById('up-btn').style.display = window.scrollY > 200 ? 'block' : 'none';
     };
