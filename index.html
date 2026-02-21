@@ -3,18 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Dash Pro</title>
+    <title>Ultimate Smart Dash</title>
     <style>
         :root {
-            --glass: rgba(255, 255, 255, 0.12);
-            --accent: #00f2fe; /* Новый яркий цвет */
+            --glass: rgba(255, 255, 255, 0.1);
+            --accent: #00f2fe;
             --text: #ffffff;
+            --bg-grad: linear-gradient(135deg, #1e3c72, #2a5298, #000);
+        }
+
+        /* Темная тема для ночи */
+        body.night-mode {
+            --bg-grad: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            --accent: #a8ff78;
         }
 
         body {
             margin: 0;
             font-family: 'Segoe UI', system-ui, sans-serif;
-            background: radial-gradient(circle at top right, #1e3c72, #2a5298, #000);
+            background: var(--bg-grad);
             background-attachment: fixed;
             color: var(--text);
             display: flex;
@@ -22,6 +29,7 @@
             align-items: center;
             min-height: 100vh;
             padding: 15px;
+            transition: background 1s ease;
         }
 
         .container { max-width: 600px; width: 100%; }
@@ -30,61 +38,60 @@
             background: var(--glass);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
-            border-radius: 20px;
+            border-radius: 24px;
             padding: 20px;
             margin-bottom: 15px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            position: relative;
         }
 
-        #clock { font-size: 3.5rem; margin: 0; font-weight: 200; text-align: center; }
-        .location { color: var(--accent); font-weight: bold; text-align: center; margin-bottom: 5px; }
+        /* Индикатор онлайна */
+        #status-dot {
+            position: absolute; top: 15px; right: 15px;
+            width: 10px; height: 10px; border-radius: 50%;
+            background: #4cd137; box-shadow: 0 0 10px #4cd137;
+        }
+
+        #clock { font-size: 3.5rem; margin: 0; font-weight: 200; text-align: center; line-height: 1; }
+        .location { color: var(--accent); font-weight: bold; text-align: center; margin-bottom: 5px; font-size: 1.1rem; }
+        .sun-times { font-size: 0.8rem; text-align: center; opacity: 0.7; margin-top: 5px; }
 
         .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-        .label { font-size: 0.7rem; text-transform: uppercase; opacity: 0.6; letter-spacing: 1px; }
+        .label { font-size: 0.75rem; text-transform: uppercase; opacity: 0.6; letter-spacing: 1px; }
         
-        /* Центрирование и цвет валют */
         .val { 
-            font-size: 2rem; 
-            font-weight: 600; 
-            display: block; 
-            margin-top: 10px; 
-            text-align: center; 
-            color: var(--accent); 
+            font-size: 2.2rem; font-weight: 600; display: block; 
+            margin-top: 10px; text-align: center; color: var(--accent); 
         }
 
-        /* Крупный IP */
         .ip-large {
-            font-size: 2.2rem;
-            font-family: 'Courier New', monospace;
-            color: #a8ff78;
-            display: block;
-            text-align: center;
-            margin-top: 10px;
+            font-size: 2.5rem; font-family: 'Courier New', monospace;
+            color: #a8ff78; display: block; text-align: center; 
+            margin-top: 5px; cursor: pointer; transition: 0.2s;
         }
+        .ip-large:active { transform: scale(0.95); opacity: 0.7; }
 
         .forecast-container {
-            display: flex;
-            overflow-x: auto;
-            gap: 12px;
-            scrollbar-width: none;
+            display: flex; overflow-x: auto; gap: 12px; scrollbar-width: none;
         }
         .forecast-container::-webkit-scrollbar { display: none; }
         .forecast-item {
-            min-width: 75px;
-            text-align: center;
-            background: rgba(255,255,255,0.05);
-            padding: 10px;
-            border-radius: 15px;
+            min-width: 75px; text-align: center; background: rgba(255,255,255,0.05);
+            padding: 12px 8px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.05);
         }
 
         .news-box {
-            height: 250px;
-            overflow-y: auto;
-            direction: rtl;
-            padding: 10px;
-            background: rgba(0,0,0,0.2);
-            border-radius: 12px;
+            height: 250px; overflow-y: auto; direction: rtl;
+            padding: 10px; background: rgba(0,0,0,0.2); border-radius: 15px;
+        }
+        .news-item { border-bottom: 1px solid rgba(255,255,255,0.1); padding: 10px 0; }
+        .news-item a { color: #00d2ff; text-decoration: none; font-size: 0.95rem; }
+
+        #up-btn {
+            position: fixed; bottom: 25px; right: 25px; width: 50px; height: 50px;
+            border-radius: 50%; background: var(--accent); color: #000; border: none;
+            font-weight: bold; cursor: pointer; display: none; z-index: 100;
         }
     </style>
 </head>
@@ -92,98 +99,127 @@
 
 <div class="container">
     <div class="glass-card">
+        <div id="status-dot" title="Network Status"></div>
         <div class="location" id="user-location">📍 Detecting location...</div>
         <h1 id="clock">00:00:00</h1>
+        <div class="sun-times">🌅 06:24  |  🌇 17:35</div>
     </div>
 
     <div class="grid-row">
         <div class="glass-card">
             <span class="label">🇺🇸 USD/ILS</span>
-            <span class="val" id="usd-rate">3.116</span>
+            <span class="val">3.116</span>
         </div>
         <div class="glass-card">
             <span class="label">🇪🇺 EUR/ILS</span>
-            <span class="val" id="eur-rate">3.679</span>
+            <span class="val">3.679</span>
         </div>
     </div>
 
     <div class="glass-card">
         <span class="label">Weekly Forecast</span>
-        <div class="forecast-container" id="forecast"></div>
+        <div class="forecast-container" id="forecast" style="margin-top:10px;"></div>
     </div>
 
     <div class="glass-card">
-        <span class="label">Your IP Address</span>
-        <span id="ip-address" class="ip-large">...</span>
+        <span class="label">Your IP Address (Tap to copy)</span>
+        <span id="ip-address" class="ip-large" onclick="copyIP()">...</span>
     </div>
 
     <div class="glass-card">
-        <span class="label" style="display:block; margin-bottom:10px;">📰 News Flash</span>
+        <span class="label" style="display:block; margin-bottom:10px;">📰 News Flash (Ynet)</span>
         <div class="news-box" id="news-list">Fetching news...</div>
     </div>
 </div>
 
-<script>
-    // 1. Clock
-    setInterval(() => {
-        document.getElementById('clock').innerText = new Date().toLocaleTimeString('en-GB');
-    }, 1000);
+<button id="up-btn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">UP</button>
 
-    // 2. Location Logic (Default: Holon)
+<script>
+    // 1. Time & Night Mode
+    function updateTime() {
+        const now = new Date();
+        document.getElementById('clock').innerText = now.toLocaleTimeString('en-GB');
+        
+        // Auto Night Mode (18:00 - 06:00)
+        const hour = now.getHours();
+        if (hour >= 18 || hour < 6) document.body.classList.add('night-mode');
+        else document.body.classList.remove('night-mode');
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+
+    // 2. Location
     async function initLocation() {
         const locElement = document.getElementById('user-location');
         if ("geolocation" in navigator) {
-            navigator.geolocation.getCurrentPosition(async (position) => {
+            navigator.geolocation.getCurrentPosition(async (pos) => {
                 try {
-                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}`);
+                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
                     const data = await res.json();
                     locElement.innerText = `📍 ${data.address.city || data.address.town || "Israel"}`;
                 } catch (e) { locElement.innerText = "📍 Holon"; }
-            }, () => {
-                locElement.innerText = "📍 Holon"; // Если нет разрешения
-            });
-        } else {
-            locElement.innerText = "📍 Holon";
-        }
+            }, () => locElement.innerText = "📍 Holon");
+        } else locElement.innerText = "📍 Holon";
     }
     initLocation();
 
-    // 3. IP
+    // 3. IP & Copy function
     fetch('https://api.ipify.org?format=json')
         .then(res => res.json())
         .then(data => document.getElementById('ip-address').innerText = data.ip);
 
-    // 4. Forecast (Today 19°C)
+    function copyIP() {
+        const ip = document.getElementById('ip-address').innerText;
+        navigator.clipboard.writeText(ip);
+        const el = document.getElementById('ip-address');
+        const oldColor = el.style.color;
+        el.style.color = '#fff';
+        setTimeout(() => el.style.color = oldColor, 500);
+        // Ненавязчивое уведомление
+        console.log("IP Copied: " + ip);
+    }
+
+    // 4. Online Status
+    window.addEventListener('online', () => document.getElementById('status-dot').style.background = '#4cd137');
+    window.addEventListener('offline', () => document.getElementById('status-dot').style.background = '#e84118');
+
+    // 5. Forecast Simulation
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const forecastBox = document.getElementById('forecast');
     const today = new Date();
     for(let i = 0; i < 7; i++) {
         const nextDay = new Date();
         nextDay.setDate(today.getDate() + i);
-        const temp = i === 0 ? 19 : 19 + Math.floor(Math.random() * 5); 
+        const temp = i === 0 ? 19 : 19 + Math.floor(Math.random() * 6);
         const item = document.createElement('div');
         item.className = 'forecast-item';
         item.innerHTML = `
-            <div style="font-size:0.8rem; opacity:0.7">${i===0?'Today':days[nextDay.getDay()]}</div>
-            <div style="font-size:1.2rem; margin:5px 0">☀️</div>
-            <div style="font-weight:bold">+${temp}°</div>
+            <div style="font-size:0.75rem; opacity:0.7">${i===0?'Today':days[nextDay.getDay()]}</div>
+            <div style="font-size:1.3rem; margin:6px 0">${temp > 22 ? '☀️' : '⛅'}</div>
+            <div style="font-weight:bold; font-size:1.1rem;">+${temp}°</div>
         `;
         forecastBox.appendChild(item);
     }
 
-    // 5. News
+    // 6. News
     async function loadNews() {
         try {
             const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent('https://www.ynet.co.il/Integration/StoryRss1854.xml')}`);
             const data = await res.json();
-            document.getElementById('news-list').innerHTML = data.items.slice(0, 10).map(item => `
-                <div style="border-bottom:1px solid rgba(255,255,255,0.1); padding:10px 0;">
-                    <a href="${item.link}" target="_blank" style="color:#00d2ff; text-decoration:none; font-size:0.95rem;">${item.title}</a>
+            document.getElementById('news-list').innerHTML = data.items.slice(0, 12).map(item => `
+                <div class="news-item">
+                    <a href="${item.link}" target="_blank">${item.title}</a>
                 </div>
             `).join('');
-        } catch (e) { document.getElementById('news-list').innerText = "Load failed"; }
+        } catch (e) { document.getElementById('news-list').innerText = "Update failed"; }
     }
     loadNews();
+    setInterval(loadNews, 300000);
+
+    // 7. Scroll
+    window.onscroll = () => {
+        document.getElementById('up-btn').style.display = window.scrollY > 150 ? 'block' : 'none';
+    };
 </script>
 </body>
 </html>
