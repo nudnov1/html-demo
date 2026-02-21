@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Dash | Pro</title>
+    <title>Smart Dash | Pro + News</title>
     <style>
         :root {
             --glass: rgba(255, 255, 255, 0.1);
@@ -34,37 +34,32 @@
             margin-bottom: 15px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            overflow: hidden;
         }
 
         /* Шапка */
-        #clock { font-size: 3.5rem; margin: 0; font-weight: 200; }
-        .location { color: var(--accent); font-weight: bold; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        #clock { font-size: 3.5rem; margin: 0; font-weight: 200; text-align: center; }
+        .location { color: var(--accent); font-weight: bold; margin-bottom: 5px; text-align: center; }
 
-        /* Сетка валют и IP */
+        /* Сетка валют */
         .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-
         .label { font-size: 0.7rem; text-transform: uppercase; opacity: 0.6; letter-spacing: 1px; }
         .val { font-size: 1.5rem; font-weight: 600; display: block; margin-top: 5px; }
 
-        /* Прогноз на неделю */
-        .forecast-container {
-            display: flex;
-            overflow-x: auto;
-            gap: 15px;
-            padding: 10px 5px;
-            scrollbar-width: none; /* Firefox */
+        /* Окно НОВОСТЕЙ (Ynet) */
+        .news-frame-container {
+            height: 450px;
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            background: white; /* Светлый фон для удобства чтения иврита */
         }
-        .forecast-container::-webkit-scrollbar { display: none; } /* Chrome */
-
-        .forecast-item {
-            min-width: 80px;
-            text-align: center;
-            background: rgba(255,255,255,0.05);
-            padding: 15px 10px;
-            border-radius: 15px;
+        
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
         }
-        .forecast-day { font-size: 0.8rem; opacity: 0.8; }
-        .forecast-temp { font-weight: bold; margin-top: 5px; font-size: 1.1rem; }
 
         #up-btn {
             position: fixed; bottom: 20px; right: 20px; width: 45px; height: 45px;
@@ -76,9 +71,8 @@
 <body>
 
 <div class="container">
-    <div class="glass-card" style="text-align: center;">
+    <div class="glass-card">
         <div class="location">📍 <span id="city">Израиль, Холон</span></div>
-        <div id="date" style="opacity: 0.7; font-size: 0.9rem;">21 февраля 2026</div>
         <h1 id="clock">00:00:00</h1>
     </div>
 
@@ -93,69 +87,40 @@
         </div>
     </div>
 
-    <div class="glass-card" style="padding: 15px 20px;">
-        <span class="label">Ваш IP Адрес</span>
-        <span id="ip-address" style="float: right; font-family: monospace; color: #a8ff78;">82.166.xx.xx</span>
+    <div class="glass-card" style="padding: 12px 20px;">
+        <span class="label">Ваш IP Адрес:</span>
+        <span id="ip-address" style="float: right; font-family: monospace; color: #a8ff78;">Загрузка...</span>
     </div>
 
     <div class="glass-card">
-        <span class="label">Прогноз на неделю</span>
-        <div class="forecast-container" id="forecast">
-            </div>
+        <span class="label" style="display: block; margin-bottom: 10px;">📰 מבזקים (Ynet News)</span>
+        <div class="news-frame-container">
+            <iframe src="https://www.ynet.co.il/news/category/184" title="Ynet News Flash"></iframe>
+        </div>
     </div>
 </div>
 
 <button id="up-btn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">UP</button>
 
 <script>
-    // 1. Время
     function updateTime() {
         const now = new Date();
         document.getElementById('clock').innerText = now.toLocaleTimeString('ru-RU');
-        const options = { weekday: 'long', day: 'numeric', month: 'long' };
-        document.getElementById('date').innerText = now.toLocaleDateString('ru-RU', options);
     }
     setInterval(updateTime, 1000);
     updateTime();
 
-    // 2. IP и город (имитация получения данных)
-    async function getNetworkData() {
+    async function getIP() {
         try {
-            const response = await fetch('https://api.ipify.org?format=json');
-            const data = await response.json();
+            const res = await fetch('https://api.ipify.org?format=json');
+            const data = await res.json();
             document.getElementById('ip-address').innerText = data.ip;
-            // Здесь можно добавить fetch к гео-сервису для города
-        } catch(e) { console.log("Network error"); }
+        } catch(e) { document.getElementById('ip-address').innerText = "Ошибка"; }
     }
-    getNetworkData();
+    getIP();
 
-    // 3. Генерация прогноза погоды
-    const days = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
-    const forecastBox = document.getElementById('forecast');
-    
-    function generateForecast() {
-        const today = new Date();
-        for(let i = 0; i < 7; i++) {
-            const nextDay = new Date();
-            nextDay.setDate(today.getDate() + i);
-            const dayName = i === 0 ? 'Сегодня' : days[nextDay.getDay()];
-            const temp = 18 + Math.floor(Math.random() * 8); // Имитация температуры
-            
-            const item = document.createElement('div');
-            item.className = 'forecast-item';
-            item.innerHTML = `
-                <div class="forecast-day">${dayName}</div>
-                <div style="font-size: 1.5rem; margin: 5px 0;">☀️</div>
-                <div class="forecast-temp">+${temp}°</div>
-            `;
-            forecastBox.appendChild(item);
-        }
-    }
-    generateForecast();
-
-    // 4. Кнопка UP
     window.onscroll = () => {
-        document.getElementById('up-btn').style.display = window.scrollY > 150 ? 'block' : 'none';
+        document.getElementById('up-btn').style.display = window.scrollY > 200 ? 'block' : 'none';
     };
 </script>
 
