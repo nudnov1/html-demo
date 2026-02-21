@@ -92,12 +92,46 @@
         <span id="ip-address" style="float: right; font-family: monospace; color: #a8ff78;">Загрузка...</span>
     </div>
 
-    <div class="glass-card">
-        <span class="label" style="display: block; margin-bottom: 10px;">📰 מבזקים (Ynet News)</span>
-        <div class="news-frame-container">
-            <iframe src="https://www.ynet.co.il/news/category/184" title="Ynet News Flash"></iframe>
+<div class="glass-card">
+    <span class="label" style="display: block; margin-bottom: 10px;">📰 מבזקים (Ynet RSS)</span>
+    <div class="news-frame-container" style="background: rgba(255,255,255,0.05); height: 350px; overflow-y: auto; padding: 10px; direction: rtl;">
+        <div id="news-list" style="font-size: 0.9rem; text-align: right;">
+            Загрузка новостей...
         </div>
     </div>
+</div>
+
+<script>
+    // Добавьте эту функцию в раздел <script>
+    async function loadYnetNews() {
+        const rssUrl = 'https://www.ynet.co.il/Integration/StoryRss1854.xml';
+        const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+        
+        try {
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+            const container = document.getElementById('news-list');
+            container.innerHTML = '';
+            
+            data.items.slice(0, 10).forEach(item => {
+                const newsItem = document.createElement('div');
+                newsItem.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
+                newsItem.style.padding = '8px 0';
+                newsItem.innerHTML = `
+                    <a href="${item.link}" target="_blank" style="color: #00d2ff; text-decoration: none; font-weight: bold;">
+                        ${item.title}
+                    </a>
+                    <div style="font-size: 0.75rem; opacity: 0.6; margin-top: 3px;">${new Date(item.pubDate).toLocaleTimeString('he-IL')}</div>
+                `;
+                container.appendChild(newsItem);
+            });
+        } catch (e) {
+            document.getElementById('news-list').innerText = "Не удалось загрузить новости";
+        }
+    }
+    loadYnetNews();
+    setInterval(loadYnetNews, 300000); // Обновлять каждые 5 минут
+</script>
 </div>
 
 <button id="up-btn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">UP</button>
