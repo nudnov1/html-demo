@@ -1,19 +1,20 @@
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Dash | Israel & Network</title>
+    <title>Smart Dash | Pro</title>
     <style>
         :root {
-            --glass: rgba(255, 255, 255, 0.12);
+            --glass: rgba(255, 255, 255, 0.1);
+            --accent: #00d2ff;
             --text: #ffffff;
-            --accent: #00f2fe;
         }
 
         body {
             margin: 0;
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: radial-gradient(circle at top right, #1e3c72, #2a5298, #000);
             background-attachment: fixed;
             color: var(--text);
             display: flex;
@@ -23,124 +24,138 @@
             padding: 20px;
         }
 
-        .container {
-            max-width: 500px;
-            width: 100%;
-            text-align: center;
-        }
+        .container { max-width: 600px; width: 100%; }
 
         .glass-card {
             background: var(--glass);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 24px;
-            padding: 25px;
-            margin-bottom: 20px;
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 15px;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-            transition: transform 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
-        .glass-card:hover { transform: translateY(-5px); }
+        /* Шапка */
+        #clock { font-size: 3.5rem; margin: 0; font-weight: 200; }
+        .location { color: var(--accent); font-weight: bold; margin-bottom: 5px; display: flex; align-items: center; justify-content: center; gap: 5px; }
 
-        h1#clock { font-size: 3.8rem; margin: 0; font-weight: 300; }
-        .date { opacity: 0.7; margin-bottom: 5px; font-size: 1.1rem; }
+        /* Сетка валют и IP */
+        .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
 
-        .currency-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+        .label { font-size: 0.7rem; text-transform: uppercase; opacity: 0.6; letter-spacing: 1px; }
+        .val { font-size: 1.5rem; font-weight: 600; display: block; margin-top: 5px; }
+
+        /* Прогноз на неделю */
+        .forecast-container {
+            display: flex;
+            overflow-x: auto;
             gap: 15px;
+            padding: 10px 5px;
+            scrollbar-width: none; /* Firefox */
         }
+        .forecast-container::-webkit-scrollbar { display: none; } /* Chrome */
 
-        .rate-val { font-size: 1.8rem; font-weight: 600; display: block; margin-top: 8px; color: var(--accent); }
-
-        .info-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.6; }
-
-        /* Новый блок IP */
-        .ip-box { border: 1px solid rgba(0, 242, 254, 0.3); }
-        #ip-address { font-family: monospace; font-size: 1.4rem; color: #a8ff78; margin-top: 5px; display: block; }
+        .forecast-item {
+            min-width: 80px;
+            text-align: center;
+            background: rgba(255,255,255,0.05);
+            padding: 15px 10px;
+            border-radius: 15px;
+        }
+        .forecast-day { font-size: 0.8rem; opacity: 0.8; }
+        .forecast-temp { font-weight: bold; margin-top: 5px; font-size: 1.1rem; }
 
         #up-btn {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 55px;
-            height: 55px;
-            border-radius: 50%;
-            background: var(--accent);
-            color: #000;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-            box-shadow: 0 5px 20px rgba(0, 242, 254, 0.4);
-            display: none;
-            z-index: 100;
+            position: fixed; bottom: 20px; right: 20px; width: 45px; height: 45px;
+            border-radius: 50%; background: var(--accent); border: none; font-weight: bold;
+            cursor: pointer; display: none; box-shadow: 0 5px 15px rgba(0,210,255,0.4);
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="glass-card">
-        <div class="date" id="date">Загрузка даты...</div>
-        <h1 id="clock">00:00</h1>
+    <div class="glass-card" style="text-align: center;">
+        <div class="location">📍 <span id="city">Израиль, Холон</span></div>
+        <div id="date" style="opacity: 0.7; font-size: 0.9rem;">21 февраля 2026</div>
+        <h1 id="clock">00:00:00</h1>
     </div>
 
-    <div class="currency-grid">
+    <div class="grid-row">
         <div class="glass-card">
-            <span class="info-label">🇺🇸 USD/ILS</span>
-            <span class="rate-val">3.12</span>
+            <span class="label">🇺🇸 USD/ILS</span>
+            <span class="val">3.128</span>
         </div>
         <div class="glass-card">
-            <span class="info-label">🇪🇺 EUR/ILS</span>
-            <span class="rate-val">3.67</span>
+            <span class="label">🇪🇺 EUR/ILS</span>
+            <span class="val">3.679</span>
         </div>
     </div>
 
-    <div class="glass-card">
-        <span class="info-label">Погода сегодня</span>
-        <div style="font-size: 1.6rem; margin-top: 10px;">☀️ +22°C (Ясно)</div>
+    <div class="glass-card" style="padding: 15px 20px;">
+        <span class="label">Ваш IP Адрес</span>
+        <span id="ip-address" style="float: right; font-family: monospace; color: #a8ff78;">82.166.xx.xx</span>
     </div>
 
-    <div class="glass-card ip-box">
-        <span class="info-label">Ваш IP адрес</span>
-        <span id="ip-address">Определяем...</span>
-    </div>
-    
-    <div style="height: 400px; opacity: 0.3; padding-top: 50px;">
-        Меню настроек (скоро)
+    <div class="glass-card">
+        <span class="label">Прогноз на неделю</span>
+        <div class="forecast-container" id="forecast">
+            </div>
     </div>
 </div>
 
 <button id="up-btn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">UP</button>
 
 <script>
-    // 1. Время и дата
+    // 1. Время
     function updateTime() {
         const now = new Date();
-        document.getElementById('clock').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+        document.getElementById('clock').innerText = now.toLocaleTimeString('ru-RU');
         const options = { weekday: 'long', day: 'numeric', month: 'long' };
         document.getElementById('date').innerText = now.toLocaleDateString('ru-RU', options);
     }
     setInterval(updateTime, 1000);
     updateTime();
 
-    // 2. Получение IP адреса
-    async function getIP() {
+    // 2. IP и город (имитация получения данных)
+    async function getNetworkData() {
         try {
             const response = await fetch('https://api.ipify.org?format=json');
             const data = await response.json();
             document.getElementById('ip-address').innerText = data.ip;
-        } catch (error) {
-            document.getElementById('ip-address').innerText = "Ошибка сети";
+            // Здесь можно добавить fetch к гео-сервису для города
+        } catch(e) { console.log("Network error"); }
+    }
+    getNetworkData();
+
+    // 3. Генерация прогноза погоды
+    const days = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+    const forecastBox = document.getElementById('forecast');
+    
+    function generateForecast() {
+        const today = new Date();
+        for(let i = 0; i < 7; i++) {
+            const nextDay = new Date();
+            nextDay.setDate(today.getDate() + i);
+            const dayName = i === 0 ? 'Сегодня' : days[nextDay.getDay()];
+            const temp = 18 + Math.floor(Math.random() * 8); // Имитация температуры
+            
+            const item = document.createElement('div');
+            item.className = 'forecast-item';
+            item.innerHTML = `
+                <div class="forecast-day">${dayName}</div>
+                <div style="font-size: 1.5rem; margin: 5px 0;">☀️</div>
+                <div class="forecast-temp">+${temp}°</div>
+            `;
+            forecastBox.appendChild(item);
         }
     }
-    getIP();
+    generateForecast();
 
-    // 3. Кнопка UP
-    window.onscroll = function() {
-        const btn = document.getElementById('up-btn');
-        btn.style.display = window.scrollY > 200 ? 'block' : 'none';
+    // 4. Кнопка UP
+    window.onscroll = () => {
+        document.getElementById('up-btn').style.display = window.scrollY > 150 ? 'block' : 'none';
     };
 </script>
 
